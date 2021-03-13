@@ -347,6 +347,11 @@ data Expr a
   | ExprAdo a (AdoBlock a)
   deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic)
 
+data TagAttr a = TagAttr Label Expr
+
+mkTag :: forall a. Ident -> [TagAttr a] -> [Expr a]
+mkTag id attrs exprs = ExprRecord 
+
 data RecordLabeled a
   = RecordPun (Name Ident)
   | RecordField Label SourceToken a
