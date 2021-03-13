@@ -393,8 +393,19 @@ expr4 :: { Expr () }
           _ -> ExprApp () $1 $2
       }
 
+attr :: { TagAttr () }
+  : label ':' expr { TagAttr () $1 $3 }
+
+attrs :: { Expr () }
+  : sep(attr, ',') { $1 }
+
+tag :: { Expr () }
+  : '(' ident ')' ExprRecord () (Wrapped $1 (Just (RecordField $2 (Label "tag") ident)) $3)
+  | '(' ident attrs ')' ExprRecord ()
+
 expr5 :: { Expr () }
   : expr6 { $1 }
+  | tag { $1 }
   | 'if' expr 'then' expr 'else' expr { ExprIf () (IfThenElse $1 $2 $3 $4 $5 $6) }
   | doBlock { ExprDo () $1 }
   | adoBlock 'in' expr { ExprAdo () $ uncurry AdoBlock $1 $2 $3 }
