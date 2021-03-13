@@ -51,6 +51,7 @@ If you would prefer to use different terms, please use the section below instead
 | [@fehrenbach](https://github.com/fehrenbach) | Stefan Fehrenbach | [MIT license](http://opensource.org/licenses/MIT) |
 | [@felixSchl](https://github.com/felixSchl) | Felix Schlitter | [MIT license](http://opensource.org/licenses/MIT) |
 | [@FrigoEU](https://github.com/FrigoEU) | Simon Van Casteren | [MIT license](http://opensource.org/licenses/MIT) |
+| [@fsoikin](https://github.com/fsoikin) | Fyodor Soikin | [MIT license](http://opensource.org/licenses/MIT) |
 | [@garyb](https://github.com/garyb) | Gary Burgess | [MIT license](http://opensource.org/licenses/MIT) |
 | [@hdgarrood](https://github.com/hdgarrood) | Harry Garrood | [MIT license](http://opensource.org/licenses/MIT) |
 | [@houli](https://github.com/houli) | Eoin Houlihan | [MIT license](http://opensource.org/licenses/MIT) |
@@ -77,6 +78,7 @@ If you would prefer to use different terms, please use the section below instead
 | [@mgmeier](https://github.com/mgmeier) | Michael Gilliland | [MIT license](http://opensource.org/licenses/MIT) |
 | [@michaelficarra](https://github.com/michaelficarra) | Michael Ficarra | [MIT license](http://opensource.org/licenses/MIT) |
 | [@MichaelXavier](https://github.com/MichaelXavier) | Michael Xavier | MIT license |
+| [@milesfrain](https://github.com/milesfrain) | Miles Frain | [MIT license](http://opensource.org/licenses/MIT) |
 | [@mjgpy3](https://github.com/mjgpy3) | Michael Gilliland | [MIT license](http://opensource.org/licenses/MIT) |
 | [@mpietrzak](https://github.com/mpietrzak) | Maciej Pietrzak | [MIT license](http://opensource.org/licenses/MIT) |
 | [@mrhania](https://github.com/mrhania) | Łukasz Hanuszczak | [MIT license](http://opensource.org/licenses/MIT) |

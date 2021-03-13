@@ -35,7 +35,7 @@ import qualified Language.PureScript.Roles as R
 import Language.PureScript.PSString (PSString)
 }
 
-%expect 95
+%expect 93
 
 %name parseType type
 %name parseExpr expr
@@ -581,6 +581,7 @@ binder1 :: { Binder () }
 
 binder2 :: { Binder () }
   : many(binderAtom) {% toBinderConstructor $1 }
+  | '-' number { uncurry (BinderNumber () (Just $1)) $2 }
 
 binderAtom :: { Binder () }
   : '_' { BinderWildcard () $1 }
@@ -591,7 +592,6 @@ binderAtom :: { Binder () }
   | char { uncurry (BinderChar ()) $1 }
   | string { uncurry (BinderString ()) $1 }
   | number { uncurry (BinderNumber () Nothing) $1 }
-  | '-' number { uncurry (BinderNumber () (Just $1)) $2 }
   | delim('[', binder, ',', ']') { BinderArray () $1 }
   | delim('{', recordBinder, ',', '}') { BinderRecord () $1 }
   | '(' binder ')' { BinderParens () (Wrapped $1 $2 $3) }

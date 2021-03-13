@@ -1,8 +1,8 @@
 Error found:
 in module [33mMain[0m
-at tests/purs/failing/ExportExplicit1.purs:10:9 - 10:10 (line 10, column 9 - line 10, column 10)
+at tests/purs/failing/QualifiedOperators.purs:4:10 - 4:21 (line 4, column 10 - line 4, column 21)
 
-  Unknown data constructor [33mY[0m
+  Unknown module [33mFoo.Bar[0m
 
 
 See https://github.com/purescript/documentation/blob/master/errors/UnknownName.md for more information,
