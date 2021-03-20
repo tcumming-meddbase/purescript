@@ -15,7 +15,7 @@ import Data.Void (Void)
 import GHC.Generics (Generic)
 import qualified Language.PureScript.Names as N
 import qualified Language.PureScript.Roles as R
-import Language.PureScript.PSString (PSString)
+import Language.PureScript.PSString (PSString, mkString)
 
 data SourcePos = SourcePos
   { srcLine :: {-# UNPACK #-} !Int
@@ -347,11 +347,6 @@ data Expr a
   | ExprAdo a (AdoBlock a)
   deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic)
 
-data TagAttr a = TagAttr Label Expr
-
-mkTag :: forall a. Ident -> [TagAttr a] -> [Expr a]
-mkTag id attrs exprs = ExprRecord 
-
 data RecordLabeled a
   = RecordPun (Name Ident)
   | RecordField Label SourceToken a
@@ -442,3 +437,51 @@ data Binder a
   | BinderTyped a (Binder a) SourceToken (Type a)
   | BinderOp a (Binder a) (QualifiedName (N.OpName 'N.ValueOpName)) (Binder a)
   deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic)
+
+
+-- PL: Additions 
+
+sep1 :: a -> Separated a
+sep1 x = Separated x []
+
+consSep :: SourceToken -> a -> Separated a -> Separated a
+consSep sep x (Separated hd tl) = 
+  Separated x $ (sep, hd) : tl
+
+identToTagName :: Name Ident -> RecordLabeled (Expr ())
+identToTagName (Name ntok nid) =
+  RecordField lbl ntok rexp
+  where 
+    name = mkString $ getIdent nid
+    lbl  = Label ntok "tag"
+    rexp = ExprString () ntok name
+
+tag1 :: SourceToken -> SourceToken -> Expr () -> Expr ()
+tag1 opn cls tid = 
+  ExprApp () (ExprApp () tid record) array
+  where 
+    record = ExprRecord () $ Wrapped opn Nothing cls
+    array  = ExprArray () $ Wrapped opn Nothing cls
+
+tagA :: SourceToken -> SourceToken -> Expr () -> Separated (RecordLabeled (Expr ())) -> Expr ()
+tagA opn cls tid attrs = 
+  ExprApp () (ExprApp () tid record) array
+  where 
+    jattrs = Just attrs
+    record = ExprRecord () $ Wrapped opn jattrs cls
+    array  = ExprArray () $ Wrapped opn Nothing cls
+
+tagAC :: SourceToken -> SourceToken -> Expr () -> Separated (RecordLabeled (Expr ())) -> Separated (Expr ()) -> Expr ()
+tagAC opn cls tid attrs inner = 
+  ExprApp () (ExprApp () tid record) array
+  where 
+    jattrs = Just attrs
+    record = ExprRecord () $ Wrapped opn jattrs cls
+    array  = ExprArray () $ Wrapped opn (Just inner) cls
+
+tagC :: SourceToken -> SourceToken -> Expr () -> Separated (Expr ()) -> Expr ()
+tagC opn cls tid inner = 
+  ExprApp () (ExprApp () tid record) array
+  where 
+    record = ExprRecord () $ Wrapped opn Nothing cls
+    array  = ExprArray () $ Wrapped opn (Just inner) cls

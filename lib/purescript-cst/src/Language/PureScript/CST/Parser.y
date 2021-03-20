@@ -150,6 +150,13 @@ many1(a) :: { NE.NonEmpty a }
   : a { pure $1 }
   | many1(a) a { NE.cons $2 $1 }
 
+many1S(a) :: { Separated a }
+  : many1SInternal(a) { separated $1 }
+
+many1SInternal(a) :: { [(SourceToken, a)] }
+   : a { [(placeholder, $1)] }
+   | many1SInternal(a) a { (placeholder, $2) : $1 }
+
 manySep(a, sep) :: { NE.NonEmpty a }
   : manySep1(a, sep) { NE.reverse $1 }
 
@@ -362,8 +369,22 @@ exprWhere :: { Where () }
   : expr { Where $1 Nothing }
   | expr 'where' '\{' manySep(letBinding, '\;') '\}' { Where $1 (Just ($2, $4)) }
 
+attr :: { RecordLabeled (Expr ()) }
+  : label '=' expr1 {% addFailure [$2] ErrRecordUpdateInCtr *> pure (RecordPun $ unexpectedName $ lblTok $1) }
+  | label ':' expr1 { RecordField $1 $2 $3 }
+
+attrs :: { Separated (RecordLabeled (Expr ())) }
+  : sep(attr, ',') { $1 }
+
+tag :: { Expr () }
+  : '(' '.' qualIdent ')'                        { tag1  $1 $4 (ExprIdent () $3) }
+  | '(' '.' qualIdent attrs ')'                  { tagA  $1 $5 (ExprIdent () $3) $4 }
+  | '(' '.' qualIdent attrs 'in' many1S(tag) ')' { tagAC $1 $7 (ExprIdent () $3) $4 $6 }
+  | '(' '.' qualIdent many1S(tag) ')'            { tagC  $1 $5 (ExprIdent () $3) $4 }
+
 expr :: { Expr () }
   : expr1 { $1 }
+  | tag { $1 }
   | expr1 '::' type { ExprTyped () $1 $2 $3 }
 
 expr1 :: { Expr () }
@@ -393,19 +414,8 @@ expr4 :: { Expr () }
           _ -> ExprApp () $1 $2
       }
 
-attr :: { TagAttr () }
-  : label ':' expr { TagAttr () $1 $3 }
-
-attrs :: { Expr () }
-  : sep(attr, ',') { $1 }
-
-tag :: { Expr () }
-  : '(' ident ')' ExprRecord () (Wrapped $1 (Just (RecordField $2 (Label "tag") ident)) $3)
-  | '(' ident attrs ')' ExprRecord ()
-
 expr5 :: { Expr () }
   : expr6 { $1 }
-  | tag { $1 }
   | 'if' expr 'then' expr 'else' expr { ExprIf () (IfThenElse $1 $2 $3 $4 $5 $6) }
   | doBlock { ExprDo () $1 }
   | adoBlock 'in' expr { ExprAdo () $ uncurry AdoBlock $1 $2 $3 }
