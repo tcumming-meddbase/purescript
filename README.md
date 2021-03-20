@@ -4,6 +4,10 @@ A small strongly typed programming language with expressive types that compiles 
 
 [![Hackage](https://img.shields.io/hackage/v/purescript.svg)](http://hackage.haskell.org/package/purescript) [![Build Status](https://api.travis-ci.org/purescript/purescript.svg?branch=master)](http://travis-ci.org/purescript/purescript)
 
+## Fork
+
+This is a fork of PureScript by @louthy that adds first-class support for Dom syntax.
+
 ## Language info
 
 - [PureScript home](http://purescript.org)
