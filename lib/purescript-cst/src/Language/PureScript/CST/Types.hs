@@ -441,9 +441,25 @@ data Binder a
 
 -- PL: Additions 
 
+noneInsideCtor :: SourceToken -> Expr ()
+noneInsideCtor tok = ExprConstructor () $ QualifiedName tok Nothing $ N.ProperName "Inner0"
+
+oneInsideCtor :: SourceToken -> Expr ()
+oneInsideCtor tok  = ExprConstructor () $ QualifiedName tok Nothing $ N.ProperName "Inner1"
+
+manyInsideCtor :: SourceToken -> Expr ()
+manyInsideCtor tok = ExprConstructor () $ QualifiedName tok Nothing $ N.ProperName "InnerN"
+
 -- Create a single Separated list with one item in it
 sep1 :: a -> Separated a
 sep1 x = Separated x []
+
+countSep :: Separated a -> Int
+countSep (Separated _ tl) = 1 + countSepInt tl
+
+countSepInt :: [(SourceToken, a)] -> Int
+countSepInt []       = 0
+countSepInt (_ : xs) = 1 + countSepInt xs
 
 -- Cons for Separated lists
 consSep :: SourceToken -> a -> Separated a -> Separated a
@@ -451,53 +467,55 @@ consSep sep x (Separated hd tl) =
   Separated x $ (sep, hd) : tl
 
 tag :: Expr () -> Expr () -> Expr () -> Expr ()
-tag tid record array = ExprApp () (ExprApp () tid record) array
+tag tid record inner = ExprApp () (ExprApp () tid record) inner
 
 -- | Simple DOM tag with no attributes and no child elements
 tag1 :: SourceToken -> SourceToken -> Expr () -> Expr ()
 tag1 opn cls tid = 
-  tag tid record array
+  tag tid record inexp
   where 
     record = ExprRecord () $ Wrapped opn Nothing cls
-    array  = ExprArray () $ Wrapped opn Nothing cls
+    inexp  = noneInsideCtor cls
 
 -- | DOM tag with attributes
 tagA :: SourceToken -> SourceToken -> Expr () -> Separated (RecordLabeled (Expr ())) -> Expr ()
 tagA opn cls tid attrs = 
-  tag tid record array
+  tag tid record inexp
   where 
     jattrs = Just attrs
     record = ExprRecord () $ Wrapped opn jattrs cls
-    array  = ExprArray () $ Wrapped opn Nothing cls
+    inexp  = noneInsideCtor cls
 
 -- | DOM tag with attributes and children
 tagAC :: SourceToken -> SourceToken -> Expr () -> Separated (RecordLabeled (Expr ())) -> Separated (Expr ()) -> Expr ()
 tagAC opn cls tid attrs inner = 
-  tag tid record array
+  tag tid record inexp
   where 
     jattrs = Just attrs
     record = ExprRecord () $ Wrapped opn jattrs cls
     array  = ExprArray () $ Wrapped opn (Just inner) cls
+    inexp  = ExprApp () (manyInsideCtor cls) array
 
 -- | DOM tag with children
 tagC :: SourceToken -> SourceToken -> Expr () -> Separated (Expr ()) -> Expr ()
 tagC opn cls tid inner = 
-  tag tid record array
+  tag tid record inexp
   where 
     record = ExprRecord () $ Wrapped opn Nothing cls
     array  = ExprArray () $ Wrapped opn (Just inner) cls
+    inexp  = ExprApp () (manyInsideCtor cls) array
 
 -- | DOM tag with attributes and a children expression which must evaluate to an array
 tagAE :: SourceToken -> SourceToken -> Expr () -> Separated (RecordLabeled (Expr ())) -> Expr () -> Expr ()
-tagAE opn cls tid attrs array = 
-  tag tid record array
+tagAE opn cls tid attrs exp = 
+  tag tid record exp
   where 
     jattrs = Just attrs
     record = ExprRecord () $ Wrapped opn jattrs cls
 
 -- | DOM tag with a children expression, must evaluate to an array
 tagE :: SourceToken -> SourceToken -> Expr () -> Expr () -> Expr ()
-tagE opn cls tid array = 
-  tag tid record array
+tagE opn cls tid exp = 
+  tag tid record exp
   where 
     record = ExprRecord () $ Wrapped opn Nothing cls
