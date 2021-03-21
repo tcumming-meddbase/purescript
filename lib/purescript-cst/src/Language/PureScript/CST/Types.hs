@@ -15,7 +15,7 @@ import Data.Void (Void)
 import GHC.Generics (Generic)
 import qualified Language.PureScript.Names as N
 import qualified Language.PureScript.Roles as R
-import Language.PureScript.PSString (PSString, mkString)
+import Language.PureScript.PSString (PSString)
 
 data SourcePos = SourcePos
   { srcLine :: {-# UNPACK #-} !Int
@@ -441,47 +441,63 @@ data Binder a
 
 -- PL: Additions 
 
+-- Create a single Separated list with one item in it
 sep1 :: a -> Separated a
 sep1 x = Separated x []
 
+-- Cons for Separated lists
 consSep :: SourceToken -> a -> Separated a -> Separated a
 consSep sep x (Separated hd tl) = 
   Separated x $ (sep, hd) : tl
 
-identToTagName :: Name Ident -> RecordLabeled (Expr ())
-identToTagName (Name ntok nid) =
-  RecordField lbl ntok rexp
-  where 
-    name = mkString $ getIdent nid
-    lbl  = Label ntok "tag"
-    rexp = ExprString () ntok name
+tag :: Expr () -> Expr () -> Expr () -> Expr ()
+tag tid record array = ExprApp () (ExprApp () tid record) array
 
+-- | Simple DOM tag with no attributes and no child elements
 tag1 :: SourceToken -> SourceToken -> Expr () -> Expr ()
 tag1 opn cls tid = 
-  ExprApp () (ExprApp () tid record) array
+  tag tid record array
   where 
     record = ExprRecord () $ Wrapped opn Nothing cls
     array  = ExprArray () $ Wrapped opn Nothing cls
 
+-- | DOM tag with attributes
 tagA :: SourceToken -> SourceToken -> Expr () -> Separated (RecordLabeled (Expr ())) -> Expr ()
 tagA opn cls tid attrs = 
-  ExprApp () (ExprApp () tid record) array
+  tag tid record array
   where 
     jattrs = Just attrs
     record = ExprRecord () $ Wrapped opn jattrs cls
     array  = ExprArray () $ Wrapped opn Nothing cls
 
+-- | DOM tag with attributes and children
 tagAC :: SourceToken -> SourceToken -> Expr () -> Separated (RecordLabeled (Expr ())) -> Separated (Expr ()) -> Expr ()
 tagAC opn cls tid attrs inner = 
-  ExprApp () (ExprApp () tid record) array
+  tag tid record array
   where 
     jattrs = Just attrs
     record = ExprRecord () $ Wrapped opn jattrs cls
     array  = ExprArray () $ Wrapped opn (Just inner) cls
 
+-- | DOM tag with children
 tagC :: SourceToken -> SourceToken -> Expr () -> Separated (Expr ()) -> Expr ()
 tagC opn cls tid inner = 
-  ExprApp () (ExprApp () tid record) array
+  tag tid record array
   where 
     record = ExprRecord () $ Wrapped opn Nothing cls
     array  = ExprArray () $ Wrapped opn (Just inner) cls
+
+-- | DOM tag with attributes and a children expression which must evaluate to an array
+tagAE :: SourceToken -> SourceToken -> Expr () -> Separated (RecordLabeled (Expr ())) -> Expr () -> Expr ()
+tagAE opn cls tid attrs array = 
+  tag tid record array
+  where 
+    jattrs = Just attrs
+    record = ExprRecord () $ Wrapped opn jattrs cls
+
+-- | DOM tag with a children expression, must evaluate to an array
+tagE :: SourceToken -> SourceToken -> Expr () -> Expr () -> Expr ()
+tagE opn cls tid array = 
+  tag tid record array
+  where 
+    record = ExprRecord () $ Wrapped opn Nothing cls

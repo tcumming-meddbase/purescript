@@ -381,6 +381,8 @@ tag :: { Expr () }
   | '(' '.' qualIdent attrs ')'                  { tagA  $1 $5 (ExprIdent () $3) $4 }
   | '(' '.' qualIdent attrs 'in' many1S(tag) ')' { tagAC $1 $7 (ExprIdent () $3) $4 $6 }
   | '(' '.' qualIdent many1S(tag) ')'            { tagC  $1 $5 (ExprIdent () $3) $4 }
+  | '(' '.' qualIdent attrs 'in' expr1 ')'       { tagAE $1 $7 (ExprIdent () $3) $4 $6 }
+  | '(' '.' qualIdent 'in' expr1 ')'             { tagE  $1 $6 (ExprIdent () $3) $5 }
 
 expr :: { Expr () }
   : expr1 { $1 }
