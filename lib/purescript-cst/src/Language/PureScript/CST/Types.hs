@@ -9,7 +9,7 @@ module Language.PureScript.CST.Types where
 
 import Prelude
 
-import Data.List.NonEmpty (NonEmpty)
+import Data.List.NonEmpty (NonEmpty((:|)))
 import Data.Text (Text)
 import Data.Void (Void)
 import GHC.Generics (Generic)
@@ -482,7 +482,7 @@ tagA :: SourceToken -> SourceToken -> Expr () -> Separated (RecordLabeled (Expr 
 tagA opn cls tid attrs = 
   tag tid record inexp
   where 
-    jattrs = Just attrs
+    jattrs = Just $ makeEvents attrs
     record = ExprRecord () $ Wrapped opn jattrs cls
     inexp  = noneInsideCtor cls
 
@@ -491,7 +491,7 @@ tagAC :: SourceToken -> SourceToken -> Expr () -> Separated (RecordLabeled (Expr
 tagAC opn cls tid attrs inner = 
   tag tid record inexp
   where 
-    jattrs = Just attrs
+    jattrs = Just $ makeEvents attrs
     record = ExprRecord () $ Wrapped opn jattrs cls
     array  = ExprArray () $ Wrapped opn (Just inner) cls
     inexp  = ExprApp () (manyInsideCtor cls) array
@@ -507,15 +507,78 @@ tagC opn cls tid inner =
 
 -- | DOM tag with attributes and a children expression which must evaluate to an array
 tagAE :: SourceToken -> SourceToken -> Expr () -> Separated (RecordLabeled (Expr ())) -> Expr () -> Expr ()
-tagAE opn cls tid attrs exp = 
-  tag tid record exp
+tagAE opn cls tid attrs e = 
+  tag tid record e
   where 
-    jattrs = Just attrs
+    jattrs = Just $ makeEvents attrs
     record = ExprRecord () $ Wrapped opn jattrs cls
 
 -- | DOM tag with a children expression, must evaluate to an array
 tagE :: SourceToken -> SourceToken -> Expr () -> Expr () -> Expr ()
-tagE opn cls tid exp = 
-  tag tid record exp
+tagE opn cls tid e = 
+  tag tid record e
   where 
     record = ExprRecord () $ Wrapped opn Nothing cls
+
+makeEvents :: Separated (RecordLabeled (Expr ())) -> Separated (RecordLabeled (Expr ()))
+makeEvents (Separated hd tl) = Separated (makeEvent hd) (makeEventsInt tl)
+
+makeEventsInt :: [(SourceToken, RecordLabeled (Expr ()))] -> [(SourceToken, RecordLabeled (Expr ()))]
+makeEventsInt []       = []
+makeEventsInt ((t, x) : xs) = (t, makeEvent x) : makeEventsInt xs
+
+makeEvent :: RecordLabeled (Expr ()) -> RecordLabeled (Expr ())
+makeEvent (RecordField (Label tok "onclick") stok e) = RecordField (Label tok "onclick") stok $ makeMouseEvent stok e
+makeEvent (RecordField (Label tok "oncontextmenu") stok e) = RecordField (Label tok "oncontextmenu") stok $ makeMouseEvent stok e
+makeEvent (RecordField (Label tok "ondblclick") stok e) = RecordField (Label tok "ondblclick") stok $ makeMouseEvent stok e
+makeEvent (RecordField (Label tok "onmousedown") stok e) = RecordField (Label tok "onmousedown") stok $ makeMouseEvent stok e
+makeEvent (RecordField (Label tok "onmouseenter") stok e) = RecordField (Label tok "onmouseenter") stok $ makeMouseEvent stok e
+makeEvent (RecordField (Label tok "onmouseleave") stok e) = RecordField (Label tok "onmouseleave") stok $ makeMouseEvent stok e
+makeEvent (RecordField (Label tok "onmousemove") stok e) = RecordField (Label tok "onmousemove") stok $ makeMouseEvent stok e
+makeEvent (RecordField (Label tok "onmouseout") stok e) = RecordField (Label tok "onmouseout") stok $ makeMouseEvent stok e
+makeEvent (RecordField (Label tok "onmouseover") stok e) = RecordField (Label tok "onmouseover") stok $ makeMouseEvent stok e
+makeEvent (RecordField (Label tok "onmouseup") stok e) = RecordField (Label tok "onmouseup") stok $ makeMouseEvent stok e
+makeEvent (RecordField (Label tok "onkeydown") stok e) = RecordField (Label tok "onkeydown") stok $ makeKeyboardEvent stok e
+makeEvent (RecordField (Label tok "onkeypress") stok e) = RecordField (Label tok "onkeypress") stok $ makeKeyboardEvent stok e
+makeEvent (RecordField (Label tok "onkeyup") stok e) = RecordField (Label tok "onkeyup") stok $ makeKeyboardEvent stok e
+makeEvent (RecordField (Label tok "onblur") stok e) = RecordField (Label tok "onblur") stok $ makeFocusEvent stok e
+makeEvent (RecordField (Label tok "onfocus") stok e) = RecordField (Label tok "onfocus") stok $ makeFocusEvent stok e
+makeEvent (RecordField (Label tok "onfocusin") stok e) = RecordField (Label tok "onfocusin") stok $ makeFocusEvent stok e
+makeEvent (RecordField (Label tok "onfocusout") stok e) = RecordField (Label tok "onfocusout") stok $ makeFocusEvent stok e
+makeEvent (RecordField (Label tok "ontouchcancel") stok e) = RecordField (Label tok "ontouchcancel") stok $ makeTouchEvent stok e
+makeEvent (RecordField (Label tok "ontouchend") stok e) = RecordField (Label tok "ontouchend") stok $ makeTouchEvent stok e
+makeEvent (RecordField (Label tok "ontouchmove") stok e) = RecordField (Label tok "ontouchmove") stok $ makeTouchEvent stok e
+makeEvent (RecordField (Label tok "ontouchstart") stok e) = RecordField (Label tok "ontouchstart") stok $ makeTouchEvent stok e
+makeEvent (RecordField (Label tok "oninput") stok e) = RecordField (Label tok "oninput") stok $ makeInputEvent stok e
+makeEvent (RecordField (Label tok "onchange") stok e) = RecordField (Label tok "onchange") stok $ makeChangeEvent stok e
+makeEvent x = x
+
+makeNamedEvent :: Text -> SourceToken -> Expr () -> Expr ()
+makeNamedEvent name tok e = ExprLambda () $ Lambda tok (binder :| []) tok e
+  where
+     nameBind = BinderVar () (Name tok $ Ident "event")
+     typeDef  = TypeConstructor () (QualifiedName tok Nothing $ N.ProperName name)
+     binder   = BinderTyped () nameBind tok typeDef
+
+-- makeNamedEvent name tok e = ExprLambda () $ Lambda tok (BinderVar () (Name tok $ Ident name) :| []) tok e
+-- QualifiedName tok Nothing $ N.ProperName "Inner0"
+-- BinderTyped a (Binder a) SourceToken (Type a)
+--   | TypeConstructor a (QualifiedName (N.ProperName 'N.TypeName))
+
+makeMouseEvent :: SourceToken -> Expr () -> Expr ()
+makeMouseEvent = makeNamedEvent "MouseEvent"
+
+makeKeyboardEvent :: SourceToken -> Expr () -> Expr ()
+makeKeyboardEvent = makeNamedEvent "KeyboardEvent"
+
+makeFocusEvent :: SourceToken -> Expr () -> Expr ()
+makeFocusEvent = makeNamedEvent "FocusEvent"
+
+makeTouchEvent :: SourceToken -> Expr () -> Expr ()
+makeTouchEvent = makeNamedEvent "TouchEvent"
+
+makeInputEvent :: SourceToken -> Expr () -> Expr ()
+makeInputEvent = makeNamedEvent "InputEvent"
+
+makeChangeEvent :: SourceToken -> Expr () -> Expr ()
+makeChangeEvent = makeNamedEvent "ChangeEvent"
