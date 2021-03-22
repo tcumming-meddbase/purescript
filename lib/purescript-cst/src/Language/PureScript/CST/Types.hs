@@ -560,11 +560,6 @@ makeNamedEvent name tok e = ExprLambda () $ Lambda tok (binder :| []) tok e
      typeDef  = TypeConstructor () (QualifiedName tok Nothing $ N.ProperName name)
      binder   = BinderTyped () nameBind tok typeDef
 
--- makeNamedEvent name tok e = ExprLambda () $ Lambda tok (BinderVar () (Name tok $ Ident name) :| []) tok e
--- QualifiedName tok Nothing $ N.ProperName "Inner0"
--- BinderTyped a (Binder a) SourceToken (Type a)
---   | TypeConstructor a (QualifiedName (N.ProperName 'N.TypeName))
-
 makeMouseEvent :: SourceToken -> Expr () -> Expr ()
 makeMouseEvent = makeNamedEvent "MouseEvent"
 
