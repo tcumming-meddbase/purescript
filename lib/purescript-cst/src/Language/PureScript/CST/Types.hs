@@ -442,13 +442,10 @@ data Binder a
 -- PL: Additions 
 
 noneInsideCtor :: SourceToken -> Expr ()
-noneInsideCtor tok = ExprConstructor () $ QualifiedName tok Nothing $ N.ProperName "Inner0"
-
-oneInsideCtor :: SourceToken -> Expr ()
-oneInsideCtor tok  = ExprConstructor () $ QualifiedName tok Nothing $ N.ProperName "Inner1"
+noneInsideCtor tok = ExprConstructor () $ QualifiedName tok Nothing $ N.ProperName "DomEmpty"
 
 manyInsideCtor :: SourceToken -> Expr ()
-manyInsideCtor tok = ExprConstructor () $ QualifiedName tok Nothing $ N.ProperName "InnerN"
+manyInsideCtor tok = ExprConstructor () $ QualifiedName tok Nothing $ N.ProperName "DomMany"
 
 -- Create a single Separated list with one item in it
 sep1 :: a -> Separated a
@@ -505,20 +502,20 @@ tagC opn cls tid inner =
     array  = ExprArray () $ Wrapped opn (Just inner) cls
     inexp  = ExprApp () (manyInsideCtor cls) array
 
--- | DOM tag with attributes and a children expression which must evaluate to an array
-tagAE :: SourceToken -> SourceToken -> Expr () -> Separated (RecordLabeled (Expr ())) -> Expr () -> Expr ()
-tagAE opn cls tid attrs e = 
-  tag tid record e
-  where 
-    jattrs = Just $ makeEvents attrs
-    record = ExprRecord () $ Wrapped opn jattrs cls
+-- -- | DOM tag with attributes and a children expression which must evaluate to an array
+-- tagAE :: SourceToken -> SourceToken -> Expr () -> Separated (RecordLabeled (Expr ())) -> Expr () -> Expr ()
+-- tagAE opn cls tid attrs e = 
+--   tag tid record e
+--   where 
+--     jattrs = Just $ makeEvents attrs
+--     record = ExprRecord () $ Wrapped opn jattrs cls
 
--- | DOM tag with a children expression, must evaluate to an array
-tagE :: SourceToken -> SourceToken -> Expr () -> Expr () -> Expr ()
-tagE opn cls tid e = 
-  tag tid record e
-  where 
-    record = ExprRecord () $ Wrapped opn Nothing cls
+-- -- | DOM tag with a children expression, must evaluate to an array
+-- tagE :: SourceToken -> SourceToken -> Expr () -> Expr () -> Expr ()
+-- tagE opn cls tid e = 
+--   tag tid record e
+--   where 
+--     record = ExprRecord () $ Wrapped opn Nothing cls
 
 makeEvents :: Separated (RecordLabeled (Expr ())) -> Separated (RecordLabeled (Expr ()))
 makeEvents (Separated hd tl) = Separated (makeEvent hd) (makeEventsInt tl)

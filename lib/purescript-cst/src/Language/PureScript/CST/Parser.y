@@ -376,14 +376,16 @@ attr :: { RecordLabeled (Expr ()) }
 attrs :: { Separated (RecordLabeled (Expr ())) }
   : sep(attr, ',') { $1 }
 
-tag :: { Expr () }
-  : '(' '.' qualIdent ')'                        { tag1  $1 $4 (ExprIdent () $3) }
-  | '(' '.' qualIdent attrs ')'                  { tagA  $1 $5 (ExprIdent () $3) $4 }
-  | '(' '.' qualIdent attrs 'in' many1S(tag) ')' { tagAC $1 $7 (ExprIdent () $3) $4 $6 }
-  | '(' '.' qualIdent many1S(tag) ')'            { tagC  $1 $5 (ExprIdent () $3) $4 }
-  | '(' '.' qualIdent attrs 'in' expr1 ')'       { tagAE $1 $7 (ExprIdent () $3) $4 $6 }
-  | '(' '.' qualIdent 'in' expr1 ')'             { tagE  $1 $6 (ExprIdent () $3) $5 }
+tagOrExpr :: { Expr () }
+  : expr2 { $1 }
+  | tag { $1 }
 
+tag :: { Expr () }
+  : '(' '.' qualIdent ')'                              { tag1  $1 $4 (ExprIdent () $3) }
+  | '(' '.' qualIdent attrs ')'                        { tagA  $1 $5 (ExprIdent () $3) $4 }
+  | '(' '.' qualIdent attrs 'in' many1S(tagOrExpr) ')' { tagAC $1 $7 (ExprIdent () $3) $4 $6 }
+  | '(' '.' qualIdent 'in' many1S(tagOrExpr) ')'       { tagC  $1 $6 (ExprIdent () $3) $5 }
+ 
 expr :: { Expr () }
   : expr1 { $1 }
   | tag { $1 }
