@@ -469,6 +469,10 @@ consSep sep x (Separated hd tl) =
 tag :: Expr () -> Expr () -> Expr () -> Expr ()
 tag tid record inner = ExprApp () (ExprApp () tid record) inner
 
+-- | Nest arbitrary expressions inside some DOM
+tagExpr :: Expr () -> Expr ()
+tagExpr e = e
+
 -- | Simple DOM tag with no attributes and no child elements
 tag1 :: SourceToken -> SourceToken -> Expr () -> Expr ()
 tag1 opn cls tid = 
