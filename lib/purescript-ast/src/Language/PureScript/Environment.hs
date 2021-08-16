@@ -442,7 +442,8 @@ primRowListTypes =
 primSymbolTypes :: M.Map (Qualified (ProperName 'TypeName)) (SourceType, TypeKind)
 primSymbolTypes =
   M.fromList $ mconcat
-    [ primClass (primSubName C.moduleSymbol "Append")  (\kind -> kindSymbol -:> kindSymbol -:> kindSymbol -:> kind)
+    [ primClass (primSubName C.moduleSymbol "ConcreteTypeName")  (\kind -> kindType -:> kindSymbol -:> kind)
+    , primClass (primSubName C.moduleSymbol "Append")  (\kind -> kindSymbol -:> kindSymbol -:> kindSymbol -:> kind)
     , primClass (primSubName C.moduleSymbol "Compare") (\kind -> kindSymbol -:> kindSymbol -:> kindOrdering -:> kind)
     , primClass (primSubName C.moduleSymbol "Cons")    (\kind -> kindSymbol -:> kindSymbol -:> kindSymbol -:> kind)
     ]
@@ -547,8 +548,16 @@ primRowListClasses =
 primSymbolClasses :: M.Map (Qualified (ProperName 'ClassName)) TypeClassData
 primSymbolClasses =
   M.fromList
+    -- class ConcreteTypeName (typ :: Type) (name :: Symbol) | type -> name
+    [ (primSubName C.moduleSymbol "ConcreteTypeName", makeTypeClassData
+        [ ("typ", Just kindType)
+        , ("name", Just kindSymbol)
+        ] [] []
+        [ FunctionalDependency [0] [1] ]
+        True)
+
     -- class Append (left :: Symbol) (right :: Symbol) (appended :: Symbol) | left right -> appended, right appended -> left, appended left -> right
-    [ (primSubName C.moduleSymbol "Append", makeTypeClassData
+    , (primSubName C.moduleSymbol "Append", makeTypeClassData
         [ ("left", Just kindSymbol)
         , ("right", Just kindSymbol)
         , ("appended", Just kindSymbol)

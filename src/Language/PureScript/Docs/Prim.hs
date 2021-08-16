@@ -120,7 +120,8 @@ primSymbolDocsModule = Module
   { modName = P.moduleNameFromString "Prim.Symbol"
   , modComments = Just "The Prim.Symbol module is embedded in the PureScript compiler. Unlike `Prim`, it is not imported implicitly. It contains automatically solved type classes for working with `Symbols`."
   , modDeclarations =
-      [ symbolAppend
+      [ symbolConcreteTypeName
+      , symbolAppend
       , symbolCompare
       , symbolCons
       ]
@@ -497,6 +498,11 @@ rowToList = primClassOf (P.primSubName "RowList") "RowToList" $ T.unlines
   [ "Compiler solved type class for generating a `RowList` from a closed row"
   , "of types.  Entries are sorted by label and duplicates are preserved in"
   , "the order they appeared in the row."
+  ]
+
+symbolConcreteTypeName :: Declaration
+symbolConcreteTypeName = primClassOf (P.primSubName "Symbol") "ConcreteTypeName" $ T.unlines
+  [ "Compiler solved type class for gettings the qualified name of a type."
   ]
 
 symbolAppend :: Declaration
