@@ -9,7 +9,7 @@ module Language.PureScript.CST.Types where
 
 import Prelude
 
-import Data.List.NonEmpty (NonEmpty((:|)))
+import Data.List.NonEmpty (NonEmpty)
 import Data.Text (Text)
 import Data.Void (Void)
 import GHC.Generics (Generic)
@@ -439,7 +439,7 @@ data Binder a
   deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic)
 
 
--- PL: Additions 
+-- PL: Additions
 
 domEmpty :: SourceToken -> Expr ()
 domEmpty tok = ExprIdent () $ QualifiedName tok Nothing $ Ident "domEmpty"
@@ -463,7 +463,7 @@ countSepInt (_ : xs) = 1 + countSepInt xs
 
 -- Cons for Separated lists
 consSep :: SourceToken -> a -> Separated a -> Separated a
-consSep sep x (Separated hd tl) = 
+consSep sep x (Separated hd tl) =
   Separated x $ (sep, hd) : tl
 
 tag :: Expr () -> Expr () -> Expr () -> Expr ()
@@ -475,94 +475,34 @@ tagExpr e = e
 
 -- | Simple DOM tag with no attributes and no child elements
 tag1 :: SourceToken -> SourceToken -> Expr () -> Expr ()
-tag1 opn cls tid = 
+tag1 opn cls tid =
   tag tid record inexp
-  where 
+  where
     record = ExprRecord () $ Wrapped opn Nothing cls
     inexp  = domEmpty opn
 
 -- | DOM tag with attributes
 tagA :: SourceToken -> SourceToken -> Expr () -> Separated (RecordLabeled (Expr ())) -> Expr ()
-tagA opn cls tid attrs = 
+tagA opn cls tid attrs =
   tag tid record inexp
-  where 
-    jattrs = Just $ makeEvents attrs
-    record = ExprRecord () $ Wrapped opn jattrs cls
+  where
+    record = ExprRecord () $ Wrapped opn (Just attrs) cls
     inexp  = domEmpty opn
 
 -- | DOM tag with attributes and children
 tagAC :: SourceToken -> SourceToken -> Expr () -> Separated (RecordLabeled (Expr ())) -> Separated (Expr ()) -> Expr ()
-tagAC opn cls tid attrs inner = 
+tagAC opn cls tid attrs inner =
   tag tid record inexp
-  where 
-    jattrs = Just $ makeEvents attrs
-    record = ExprRecord () $ Wrapped opn jattrs cls
+  where
+    record = ExprRecord () $ Wrapped opn (Just attrs) cls
     array  = ExprArray () $ Wrapped opn (Just inner) cls
     inexp  = ExprApp () (domMany opn) array
 
 -- | DOM tag with children
 tagC :: SourceToken -> SourceToken -> Expr () -> Separated (Expr ()) -> Expr ()
-tagC opn cls tid inner = 
+tagC opn cls tid inner =
   tag tid record inexp
-  where 
+  where
     record = ExprRecord () $ Wrapped opn Nothing cls
     array  = ExprArray () $ Wrapped opn (Just inner) cls
     inexp  = ExprApp () (domMany opn) array
-
-makeEvents :: Separated (RecordLabeled (Expr ())) -> Separated (RecordLabeled (Expr ()))
-makeEvents (Separated hd tl) = Separated (makeEvent hd) (makeEventsInt tl)
-
-makeEventsInt :: [(SourceToken, RecordLabeled (Expr ()))] -> [(SourceToken, RecordLabeled (Expr ()))]
-makeEventsInt []       = []
-makeEventsInt ((t, x) : xs) = (t, makeEvent x) : makeEventsInt xs
-
-makeEvent :: RecordLabeled (Expr ()) -> RecordLabeled (Expr ())
-makeEvent (RecordField (Label tok "onclick") stok e) = RecordField (Label tok "onclick") stok $ makeMouseEvent stok e
-makeEvent (RecordField (Label tok "oncontextmenu") stok e) = RecordField (Label tok "oncontextmenu") stok $ makeMouseEvent stok e
-makeEvent (RecordField (Label tok "ondblclick") stok e) = RecordField (Label tok "ondblclick") stok $ makeMouseEvent stok e
-makeEvent (RecordField (Label tok "onmousedown") stok e) = RecordField (Label tok "onmousedown") stok $ makeMouseEvent stok e
-makeEvent (RecordField (Label tok "onmouseenter") stok e) = RecordField (Label tok "onmouseenter") stok $ makeMouseEvent stok e
-makeEvent (RecordField (Label tok "onmouseleave") stok e) = RecordField (Label tok "onmouseleave") stok $ makeMouseEvent stok e
-makeEvent (RecordField (Label tok "onmousemove") stok e) = RecordField (Label tok "onmousemove") stok $ makeMouseEvent stok e
-makeEvent (RecordField (Label tok "onmouseout") stok e) = RecordField (Label tok "onmouseout") stok $ makeMouseEvent stok e
-makeEvent (RecordField (Label tok "onmouseover") stok e) = RecordField (Label tok "onmouseover") stok $ makeMouseEvent stok e
-makeEvent (RecordField (Label tok "onmouseup") stok e) = RecordField (Label tok "onmouseup") stok $ makeMouseEvent stok e
-makeEvent (RecordField (Label tok "onkeydown") stok e) = RecordField (Label tok "onkeydown") stok $ makeKeyboardEvent stok e
-makeEvent (RecordField (Label tok "onkeypress") stok e) = RecordField (Label tok "onkeypress") stok $ makeKeyboardEvent stok e
-makeEvent (RecordField (Label tok "onkeyup") stok e) = RecordField (Label tok "onkeyup") stok $ makeKeyboardEvent stok e
-makeEvent (RecordField (Label tok "onblur") stok e) = RecordField (Label tok "onblur") stok $ makeFocusEvent stok e
-makeEvent (RecordField (Label tok "onfocus") stok e) = RecordField (Label tok "onfocus") stok $ makeFocusEvent stok e
-makeEvent (RecordField (Label tok "onfocusin") stok e) = RecordField (Label tok "onfocusin") stok $ makeFocusEvent stok e
-makeEvent (RecordField (Label tok "onfocusout") stok e) = RecordField (Label tok "onfocusout") stok $ makeFocusEvent stok e
-makeEvent (RecordField (Label tok "ontouchcancel") stok e) = RecordField (Label tok "ontouchcancel") stok $ makeTouchEvent stok e
-makeEvent (RecordField (Label tok "ontouchend") stok e) = RecordField (Label tok "ontouchend") stok $ makeTouchEvent stok e
-makeEvent (RecordField (Label tok "ontouchmove") stok e) = RecordField (Label tok "ontouchmove") stok $ makeTouchEvent stok e
-makeEvent (RecordField (Label tok "ontouchstart") stok e) = RecordField (Label tok "ontouchstart") stok $ makeTouchEvent stok e
-makeEvent (RecordField (Label tok "oninput") stok e) = RecordField (Label tok "oninput") stok $ makeInputEvent stok e
-makeEvent (RecordField (Label tok "onchange") stok e) = RecordField (Label tok "onchange") stok $ makeChangeEvent stok e
-makeEvent x = x
-
-makeNamedEvent :: Text -> SourceToken -> Expr () -> Expr ()
-makeNamedEvent name tok e = ExprLambda () $ Lambda tok (binder :| []) tok e
-  where
-     nameBind = BinderVar () (Name tok $ Ident "event")
-     typeDef  = TypeConstructor () (QualifiedName tok Nothing $ N.ProperName name)
-     binder   = BinderTyped () nameBind tok typeDef
-
-makeMouseEvent :: SourceToken -> Expr () -> Expr ()
-makeMouseEvent = makeNamedEvent "MouseEvent"
-
-makeKeyboardEvent :: SourceToken -> Expr () -> Expr ()
-makeKeyboardEvent = makeNamedEvent "KeyboardEvent"
-
-makeFocusEvent :: SourceToken -> Expr () -> Expr ()
-makeFocusEvent = makeNamedEvent "FocusEvent"
-
-makeTouchEvent :: SourceToken -> Expr () -> Expr ()
-makeTouchEvent = makeNamedEvent "TouchEvent"
-
-makeInputEvent :: SourceToken -> Expr () -> Expr ()
-makeInputEvent = makeNamedEvent "InputEvent"
-
-makeChangeEvent :: SourceToken -> Expr () -> Expr ()
-makeChangeEvent = makeNamedEvent "ChangeEvent"
