@@ -109,6 +109,9 @@ pattern RowListCons = Qualified (Just PrimRowList) (ProperName "Cons")
 pattern PrimSymbol :: ModuleName
 pattern PrimSymbol = ModuleName "Prim.Symbol"
 
+pattern SymbolConcreteTypeName :: Qualified (ProperName 'ClassName)
+pattern SymbolConcreteTypeName = Qualified (Just PrimSymbol) (ProperName "ConcreteTypeName")
+
 pattern SymbolCompare :: Qualified (ProperName 'ClassName)
 pattern SymbolCompare = Qualified (Just PrimSymbol) (ProperName "Compare")
 

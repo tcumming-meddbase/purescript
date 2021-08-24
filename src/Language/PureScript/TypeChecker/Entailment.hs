@@ -178,6 +178,7 @@ entails SolverOptions{..} constraint context hints =
       -- This allows us to defer a warning by propagating the constraint.
       findDicts ctx cn Nothing ++ [TypeClassDictionaryInScope [] 0 (WarnInstance msg) [] C.Warn [] [] [msg] Nothing]
     forClassName _ _ C.IsSymbol _ args | Just dicts <- solveIsSymbol args = dicts
+    forClassName _ _ C.SymbolConcreteTypeName _ args | Just dicts <- solveConcreteTypeName args = dicts
     forClassName _ _ C.SymbolCompare _ args | Just dicts <- solveSymbolCompare args = dicts
     forClassName _ _ C.SymbolAppend _ args | Just dicts <- solveSymbolAppend args = dicts
     forClassName _ _ C.SymbolCons _ args | Just dicts <- solveSymbolCons args = dicts
@@ -412,6 +413,25 @@ entails SolverOptions{..} constraint context hints =
     solveIsSymbol :: [SourceType] -> Maybe [TypeClassDict]
     solveIsSymbol [TypeLevelString ann sym] = Just [TypeClassDictionaryInScope [] 0 (IsSymbolInstance sym) [] C.IsSymbol [] [] [TypeLevelString ann sym] Nothing]
     solveIsSymbol _ = Nothing
+
+    solveConcreteTypeName :: [SourceType] -> Maybe [TypeClassDict]
+    solveConcreteTypeName [typ, _] = do
+      name <- typeConcreteName False typ
+      let args = [ typ, srcTypeLevelString (mkString name) ]
+      let dict = TypeClassDictionaryInScope [] 0 EmptyClassInstance [] C.SymbolConcreteTypeName [] [] args Nothing
+      pure [dict]
+    solveConcreteTypeName _ = Nothing
+
+    typeConcreteName :: Bool -> SourceType -> Maybe Text
+    typeConcreteName _ (TypeConstructor _ c) = pure $ showQualified runProperName c
+    typeConcreteName braces (TypeApp _ l r) = do
+      lName <- typeConcreteName False l
+      rName <- typeConcreteName True r
+      let appName = lName <> T.pack " " <> rName
+      pure $ if braces
+        then T.pack "(" <> appName <> T.pack ")"
+        else appName
+    typeConcreteName _ _ = Nothing
 
     solveSymbolCompare :: [SourceType] -> Maybe [TypeClassDict]
     solveSymbolCompare [arg0@(TypeLevelString _ lhs), arg1@(TypeLevelString _ rhs), _] =
