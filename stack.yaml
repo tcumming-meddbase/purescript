@@ -1,17 +1,22 @@
-resolver: lts-13.26
-pvp-bounds: upper
+resolver: lts-18.15
+pvp-bounds: both
 packages:
 - '.'
-- lib/purescript-ast
 - lib/purescript-cst
+ghc-options:
+  # Build with advanced optimizations enabled by default
+  "$locals": -O2 -Werror
 extra-deps:
-- serialise-0.2.2.0
-- cborg-0.2.2.0
-- happy-1.19.9
+# As of 2021-11-08, the latest release of `language-javascript` is 0.7.1.0,
+# but it has a problem with parsing the `async` keyword.  It doesn't allow
+# `async` to be used as an object key:
+# https://github.com/erikd/language-javascript/issues/131
 - language-javascript-0.7.0.0
-- network-3.0.1.1
-- these-1.0.1
-- semialign-1
+# The ./.hspec file uses the --times flag, which was added in hspec-2.8.0.
+# LTS-18 has only hspec-2.7.
+- hspec-2.8.3
+- hspec-core-2.8.3
+- hspec-discover-2.8.3
 nix:
   enable: false
   packages:
@@ -25,4 +30,6 @@ flags:
     lib-only: true
   these:
     assoc: false
-    quickcheck: false
+  haskeline:
+    # Avoids a libtinfo dynamic library dependency
+    terminfo: false

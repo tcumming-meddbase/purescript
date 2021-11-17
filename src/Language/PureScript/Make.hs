@@ -2,6 +2,7 @@ module Language.PureScript.Make
   (
   -- * Make API
   rebuildModule
+  , rebuildModule'
   , make
   , inferForeignModules
   , module Monad
@@ -11,17 +12,18 @@ module Language.PureScript.Make
 import           Prelude.Compat
 
 import           Control.Concurrent.Lifted as C
+import           Control.Exception.Base (onException)
 import           Control.Monad hiding (sequence)
 import           Control.Monad.Error.Class (MonadError(..))
 import           Control.Monad.IO.Class
 import           Control.Monad.Supply
-import           Control.Monad.Trans.Control (MonadBaseControl(..))
+import           Control.Monad.Trans.Control (MonadBaseControl(..), control)
 import           Control.Monad.Trans.State (runStateT)
 import           Control.Monad.Writer.Class (MonadWriter(..), censor)
 import           Control.Monad.Writer.Strict (runWriterT)
 import           Data.Function (on)
 import           Data.Foldable (fold, for_)
-import           Data.List (foldl', sortBy)
+import           Data.List (foldl', sortOn)
 import qualified Data.List.NonEmpty as NEL
 import           Data.Maybe (fromMaybe)
 import qualified Data.Map as M
@@ -99,8 +101,8 @@ rebuildModule' MakeActions{..} exEnv externs m@(Module _ _ moduleName _ _) = do
   let mod' = Module ss coms moduleName regrouped exps
       corefn = CF.moduleToCoreFn env' mod'
       optimized = CF.optimizeCoreFn corefn
-      [renamed] = renameInModules [optimized]
-      exts = moduleToExternsFile mod' env'
+      (renamedIdents, renamed) = renameInModule optimized
+      exts = moduleToExternsFile mod' env' renamedIdents
   ffiCodegen renamed
 
   -- It may seem more obvious to write `docs <- Docs.convertModule m env' here,
@@ -144,6 +146,10 @@ make ma@MakeActions{..} ms = do
       (fst $ CST.resFull m)
       (fmap importPrim . snd $ CST.resFull m)
       (deps `inOrderOf` map (getModuleName . CST.resPartial) sorted)
+
+      -- Prevent hanging on other modules when there is an internal error
+      -- (the exception is thrown, but other threads waiting on MVars are released)
+      `onExceptionLifted` BuildPlan.markComplete buildPlan moduleName (BuildJobFailed mempty)
 
   -- Wait for all threads to complete, and collect results (and errors).
   (failures, successes) <-
@@ -199,7 +205,7 @@ make ma@MakeActions{..} ms = do
   -- Find all groups of duplicate values in a list based on a projection.
   findDuplicates :: Ord b => (a -> b) -> [a] -> Maybe [NEL.NonEmpty a]
   findDuplicates f xs =
-    case filter ((> 1) . length) . NEL.groupBy ((==) `on` f) . sortBy (compare `on` f) $ xs of
+    case filter ((> 1) . length) . NEL.groupBy ((==) `on` f) . sortOn f $ xs of
       [] -> Nothing
       xss -> Just xss
 
@@ -235,6 +241,9 @@ make ma@MakeActions{..} ms = do
         Nothing -> return BuildJobSkipped
 
     BuildPlan.markComplete buildPlan moduleName result
+
+  onExceptionLifted :: m a -> m b -> m a
+  onExceptionLifted l r = control $ \runInIO -> runInIO l `onException` runInIO r
 
 -- | Infer the module name for a module by looking for the same filename with
 -- a .js extension.

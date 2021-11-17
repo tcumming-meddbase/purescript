@@ -1,10 +1,3 @@
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TupleSections #-}
-
 module Main where
 
 import Prelude
@@ -17,6 +10,7 @@ import qualified Command.Hierarchy as Hierarchy
 import qualified Command.Ide as Ide
 import qualified Command.Publish as Publish
 import qualified Command.REPL as REPL
+import           Control.Monad (join)
 import           Data.Foldable (fold)
 import qualified Options.Applicative as Opts
 import           System.Environment (getArgs)
@@ -31,8 +25,7 @@ main = do
     IO.hSetEncoding IO.stderr IO.utf8
     IO.hSetBuffering IO.stdout IO.LineBuffering
     IO.hSetBuffering IO.stderr IO.LineBuffering
-    cmd <- Opts.handleParseResult . execParserPure opts =<< getArgs
-    cmd
+    join $ Opts.handleParseResult . execParserPure opts =<< getArgs
   where
     opts        = Opts.info (versionInfo <*> Opts.helper <*> commands) infoModList
     infoModList = Opts.fullDesc <> headerInfo <> footerInfo
@@ -55,7 +48,7 @@ main = do
     -- | Displays full command help when invoked with no arguments.
     execParserPure :: Opts.ParserInfo a -> [String] -> Opts.ParserResult a
     execParserPure pinfo [] = Opts.Failure $
-      Opts.parserFailure Opts.defaultPrefs pinfo Opts.ShowHelpText mempty
+      Opts.parserFailure Opts.defaultPrefs pinfo (Opts.ShowHelpText Nothing) mempty
     execParserPure pinfo args = Opts.execParserPure Opts.defaultPrefs pinfo args
 
     versionInfo :: Opts.Parser (a -> a)

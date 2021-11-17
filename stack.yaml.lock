@@ -5,27 +5,6 @@
 
 packages:
 - completed:
-    hackage: serialise-0.2.2.0@sha256:6e8b89f437009ab30297a57de1a4bf2e3da5e5a086b96bf5cc278bdb7178f097,8356
-    pantry-tree:
-      size: 4056
-      sha256: 97702981cdfe830fca6d258341b9773272400e475165689548f56da83eff2778
-  original:
-    hackage: serialise-0.2.2.0
-- completed:
-    hackage: cborg-0.2.2.0@sha256:eaee50d09d766af95ba18348e4fc230243033b98633ed46ccb5ae85efef7dc6c,4779
-    pantry-tree:
-      size: 2559
-      sha256: 21d70e015be2592a62919ff984a14d64851e5f29f67d83afddd30054c3ac8b24
-  original:
-    hackage: cborg-0.2.2.0
-- completed:
-    hackage: happy-1.19.9@sha256:f8c774230735a390c287b2980cfcd2703d24d8dde85a01ea721b7b4b4c82944f,4667
-    pantry-tree:
-      size: 7980
-      sha256: 1f1d622f6e773e7a674da6364b755714c76c3fbb3c7a4e65deaf07242fc15211
-  original:
-    hackage: happy-1.19.9
-- completed:
     hackage: language-javascript-0.7.0.0@sha256:3eab0262b8ac5621936a4beab6a0f97d0e00a63455a8b0e3ac1547b4088dae7d,3898
     pantry-tree:
       size: 2244
@@ -33,29 +12,29 @@ packages:
   original:
     hackage: language-javascript-0.7.0.0
 - completed:
-    hackage: network-3.0.1.1@sha256:1a251b790ea98b6f7433f677958f921950780ba6f143d61ba8c0e3f7a9879097,4074
+    hackage: hspec-2.8.3@sha256:43a42e23994a6c61a7adead7e8a412016680234f5a14a157f68c020871e59534,1709
     pantry-tree:
-      size: 3296
-      sha256: 78e378780c998faaf4e32a16b98880220f502d8ef005f24d7ee0c99fb50636e6
+      size: 583
+      sha256: 44d06a4d76211f29d1ef5de004f363448cdfe65d897bc102ad3218b3fc6b147b
   original:
-    hackage: network-3.0.1.1
+    hackage: hspec-2.8.3
 - completed:
-    hackage: these-1.0.1@sha256:58dba2446b57dde711c5e7f63910d18bc28b9a5831a89772986bb184a3e7851b,3266
+    hackage: hspec-core-2.8.3@sha256:e4c1e08e16842804c470c2b4722e417ed2a556a47a74107401ad42195522f7a7,4992
     pantry-tree:
-      size: 351
-      sha256: dd785882a522b6c76ee97fdd5e0e8cbca15b2fc951985bbecc76d0dd6e456aae
+      size: 4386
+      sha256: a1e51583be8ee39c54314f003f251e5221c98594f26fb5e716ddc400ae85b8a3
   original:
-    hackage: these-1.0.1
+    hackage: hspec-core-2.8.3
 - completed:
-    hackage: semialign-1@sha256:f11b3d8d0f31a3556061ec0fb515575646d162f12c5b25a0f07c92679db7d862,2433
+    hackage: hspec-discover-2.8.3@sha256:b94758b375b5a810ea4c4c187381211c3acc77007f6f795c4e79f206ed6da56a,2025
     pantry-tree:
-      size: 466
-      sha256: e67b833b94b7fa23afbf7088833a38596cf35a2b93635604dd9e49d0389360fe
+      size: 828
+      sha256: 9625353c11b7e231f295cd6070e9c838a49a250488e8ad3324dc5706f33c0fe8
   original:
-    hackage: semialign-1
+    hackage: hspec-discover-2.8.3
 snapshots:
 - completed:
-    size: 499889
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/13/26.yaml
-    sha256: ecb02ee16829df8d7219e7d7fe6c310819820bf335b0b9534bce84d3ea896684
-  original: lts-13.26
+    size: 586286
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/15.yaml
+    sha256: 2c9cb11d7aa0656bf28672dcb2414ab21e3ba9ea83ca170c216b2c2fc7e55856
+  original: lts-18.15

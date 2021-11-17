@@ -35,7 +35,7 @@ import qualified Language.PureScript.Roles as R
 import Language.PureScript.PSString (PSString)
 }
 
-%expect 93
+%expect 0
 
 %name parseType type
 %name parseExpr expr
@@ -144,7 +144,7 @@ import Language.PureScript.PSString (PSString)
 %%
 
 many(a) :: { NE.NonEmpty a }
-  : many1(a) { NE.reverse $1 }
+  : many1(a) %shift { NE.reverse $1 }
 
 many1(a) :: { NE.NonEmpty a }
   : a { pure $1 }
@@ -176,7 +176,7 @@ sep(a, s) :: { Separated a }
   : sep1(a, s) { separated $1 }
 
 sep1(a, s) :: { [(SourceToken, a)] }
-  : a { [(placeholder, $1)] }
+  : a %shift { [(placeholder, $1)] }
   | sep1(a, s) s a { ($2, $3) : $1 }
 
 delim(a, b, c, d) :: { Delimited b }
@@ -298,7 +298,7 @@ boolean :: { (SourceToken, Bool) }
   | 'false' { toBoolean $1 }
 
 type :: { Type () }
-  : type1 { $1 }
+  : type1 %shift { $1 }
   | type1 '::' type { TypeKinded () $1 $2 $3 }
 
 type1 :: { Type () }
@@ -306,7 +306,7 @@ type1 :: { Type () }
   | forall many(typeVarBinding) '.' type1 { TypeForall () $1 $2 $3 $4 }
 
 type2 :: { Type () }
-  : type3 { $1 }
+  : type3 %shift { $1 }
   | type3 '->' type1 { TypeArr () $1 $2 $3 }
   | type3 '=>' type1 {% do cs <- toConstraint $1; pure $ TypeConstrained () cs $2 $3 }
 
@@ -315,7 +315,7 @@ type3 :: { Type () }
   | type3 qualOp type4 { TypeOp () $1 (getQualifiedOpName $2) $3 }
 
 type4 :: { Type () }
-  : type5 { $1 }
+  : type5 %shift { $1 }
   | '#' type4 {% addWarning ($1 : toList (flattenType $2)) WarnDeprecatedRowSyntax *> pure (TypeUnaryRow () $1 $2) }
 
 type5 :: { Type () }
@@ -366,7 +366,7 @@ forall :: { SourceToken }
   | 'forallu' { $1 }
 
 exprWhere :: { Where () }
-  : expr { Where $1 Nothing }
+  : expr %shift { Where $1 Nothing }
   | expr 'where' '\{' manySep(letBinding, '\;') '\}' { Where $1 (Just ($2, $4)) }
 
 attr :: { RecordLabeled (Expr ()) }
@@ -386,15 +386,15 @@ tag :: { Expr () }
   | '(' '.' qualIdent attrs ')'                        { tagA  $1 $5 (ExprIdent () $3) $4 }
   | '(' '.' qualIdent attrs 'in' many1S(tagOrExpr) ')' { tagAC $1 $7 (ExprIdent () $3) $4 $6 }
   | '(' '.' qualIdent 'in' many1S(tagOrExpr) ')'       { tagC  $1 $6 (ExprIdent () $3) $5 }
- 
+
 expr :: { Expr () }
-  : expr1 { $1 }
-  | tag { $1 }
+  : expr1 %shift { $1 }
+  | tag %shift { $1 }
   | expr1 '::' type { ExprTyped () $1 $2 $3 }
 
 expr1 :: { Expr () }
-  : expr2 { $1 }
-  | expr1 qualOp expr2 { ExprOp () $1 (getQualifiedOpName $2) $3 }
+  : expr2 %shift { $1 }
+  | expr1 qualOp expr2 %shift { ExprOp () $1 (getQualifiedOpName $2) $3 }
 
 expr2 :: { Expr () }
   : expr3 { $1 }
@@ -405,7 +405,7 @@ exprBacktick :: { Expr () }
   | exprBacktick qualOp expr3 { ExprOp () $1 (getQualifiedOpName $2) $3 }
 
 expr3 :: { Expr () }
-  : expr4 { $1 }
+  : expr4 %shift { $1 }
   | '-' expr3 { ExprNegate () $1 $2 }
 
 expr4 :: { Expr () }
@@ -437,7 +437,7 @@ expr5 :: { Expr () }
       { ExprCase () (CaseOf $1 $2 $3 (pure ($5, $7))) }
 
 expr6 :: { Expr () }
-  : expr7 { $1 }
+  : expr7 %shift { $1 }
   | expr7 '{' '}' { ExprApp () $1 (ExprRecord () (Wrapped $2 Nothing $3)) }
   | expr7 '{' sep(recordUpdateOrLabel, ',') '}'
       {% toRecordFields $3 >>= \case
@@ -600,7 +600,7 @@ binder2 :: { Binder () }
 
 binderAtom :: { Binder () }
   : '_' { BinderWildcard () $1 }
-  | ident { BinderVar () $1 }
+  | ident %shift { BinderVar () $1 }
   | ident '@' binderAtom { BinderNamed () $1 $2 $3 }
   | qualProperName { BinderConstructor () (getQualifiedProperName $1) [] }
   | boolean { uncurry (BinderBoolean ()) $1 }
@@ -762,10 +762,14 @@ classMember :: { Labeled (Name Ident) (Type ()) }
   : ident '::' type {% checkNoWildcards $3 *> pure (Labeled $1 $2 $3) }
 
 instHead :: { InstanceHead () }
-  : 'instance' ident '::' constraints '=>' qualProperName manyOrEmpty(typeAtom)
-      { InstanceHead $1 $2 $3 (Just ($4, $5)) (getQualifiedProperName $6) $7 }
+  : 'instance' constraints '=>' qualProperName manyOrEmpty(typeAtom)
+      { InstanceHead $1 Nothing (Just ($2, $3)) (getQualifiedProperName $4) $5 }
+  | 'instance' qualProperName manyOrEmpty(typeAtom)
+      { InstanceHead $1 Nothing Nothing (getQualifiedProperName $2) $3 }
+  | 'instance' ident '::' constraints '=>' qualProperName manyOrEmpty(typeAtom)
+      { InstanceHead $1 (Just ($2, $3)) (Just ($4, $5)) (getQualifiedProperName $6) $7 }
   | 'instance' ident '::' qualProperName manyOrEmpty(typeAtom)
-      { InstanceHead $1 $2 $3 Nothing (getQualifiedProperName $4) $5 }
+      { InstanceHead $1 (Just ($2, $3)) Nothing (getQualifiedProperName $4) $5 }
 
 constraints :: { OneOrDelimited (Constraint ()) }
   : constraint { One $1 }

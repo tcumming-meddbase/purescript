@@ -184,6 +184,7 @@ primTypeOf gen title comments = Declaration
   , declSourceSpan = Nothing
   , declChildren = []
   , declInfo = ExternDataDeclaration (lookupPrimTypeKindOf gen title)
+  , declKind = Nothing
   }
 
 -- | Lookup the TypeClassData of a Prim class. This function is specifically
@@ -210,11 +211,12 @@ primClassOf gen title comments = Declaration
   , declInfo =
       let
         tcd = lookupPrimClassOf gen title
-        args = fmap (fmap (fmap ($> ()))) $ P.typeClassArguments tcd
-        superclasses = fmap ($> ()) $ P.typeClassSuperclasses tcd
+        args = fmap (fmap ($> ())) <$> P.typeClassArguments tcd
+        superclasses = ($> ()) <$> P.typeClassSuperclasses tcd
         fundeps = convertFundepsToStrings args (P.typeClassDependencies tcd)
       in
         TypeClassDeclaration args superclasses fundeps
+  , declKind = Nothing
   }
 
 kindType :: Declaration
