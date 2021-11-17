@@ -466,7 +466,7 @@ consSep sep x (Separated hd tl) =
   Separated x $ (sep, hd) : tl
 
 tag :: Expr () -> Expr () -> Expr () -> Expr ()
-tag tid record inner = ExprApp () (ExprApp () tid record) inner
+tag tid record = ExprApp () (ExprApp () tid record)
 
 -- | Nest arbitrary expressions inside some DOM
 tagExpr :: Expr () -> Expr ()
